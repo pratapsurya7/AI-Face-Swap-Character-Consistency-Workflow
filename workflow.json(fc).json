@@ -1,0 +1,92 @@
+{
+  "nodes": {
+    "1": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "sdxl_base_1.0.safetensors"
+      }
+    },
+
+    "2": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "portrait photo of a person, highly detailed, 8k, cinematic lighting",
+        "clip": ["1", 1]
+      }
+    },
+
+    "3": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "blurry, deformed face, low quality, extra fingers",
+        "clip": ["1", 1]
+      }
+    },
+
+    "4": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "target_face.png"
+      }
+    },
+
+    "5": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "reference_face.png"
+      }
+    },
+
+    "6": {
+      "class_type": "IPAdapterFaceID",
+      "inputs": {
+        "model": ["1", 0],
+        "image": ["5", 0],
+        "weight": 0.85,
+        "start_at": 0,
+        "end_at": 1
+      }
+    },
+
+    "7": {
+      "class_type": "ReActorFaceSwap",
+      "inputs": {
+        "source_image": ["5", 0],
+        "target_image": ["4", 0],
+        "swap_model": "inswapper_128.onnx",
+        "face_restore": true
+      }
+    },
+
+    "8": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": ["6", 0],
+        "positive": ["2", 0],
+        "negative": ["3", 0],
+        "latent_image": ["4", 0],
+        "steps": 30,
+        "cfg": 6.5,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 0.6
+      }
+    },
+
+    "9": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": ["8", 0],
+        "vae": ["1", 2]
+      }
+    },
+
+    "10": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "filename_prefix": "face_swap_output",
+        "images": ["9", 0]
+      }
+    }
+  }
+}
